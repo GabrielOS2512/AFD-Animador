@@ -1,8 +1,7 @@
 package animator;
 
-import java.awt.Desktop;
 import java.io.BufferedWriter;
-import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -25,10 +24,8 @@ public class Automato {
 	public String EstadoAtual;
 	public List<String> EstadoAtualAFN;
 	public boolean aceito = false;
-
 	
 //--------------------------------------- AFN --------------------------------------------------------------
-	
 	public void AFN(String[] linha1, ArrayList<String> transicao1, String palavra) {
 		this.Estados = new ArrayList<String>();
 		this.EstadosIniciais = new ArrayList<String>();
@@ -82,27 +79,13 @@ public class Automato {
 			System.out.println("|-------   DOT  Criado    -------|");
 			Thread.sleep(2000);
 			Runtime.getRuntime().exec("magick convert -delay 120 -loop 0 *.png automato.gif");	// converte para gif
-			Thread.sleep(2000);
+			Thread.sleep(3000);
 			System.out.println("|-----   Animação Criada    -----|");
 		} catch (IOException | InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 			
-		//abrir o gif do automato
-		try { 
-			System.out.println("|-----      Abrindo...      -----|");
-			File file = new File("automato.gif");   
-			if(!Desktop.isDesktopSupported()){  
-				return;  
-			}  
-			Desktop desktop = Desktop.getDesktop();  
-			if(file.exists()) 
-				desktop.open(file);  
-		} catch(Exception e){  
-			e.printStackTrace();  
-		}  
-
 	}
 
 	public void montarAFN(ArrayList<String> transicao1) {//Monta map de transicoes
@@ -121,60 +104,127 @@ public class Automato {
 	}
 	
 	public boolean executarAFN(String palavra) {//executar
-		this.EstadoAtualAFN.add(EstadosIniciais.get(0));//inicial
-		System.out.println("|--- Estado Inicial: " +EstadoAtualAFN +" | Palavra: "+palavra+" ---|");
-		System.out.println("_________________________________________________________________________________________________________________");
-		
-		//comeco do automato
-		for (int i=0; i<palavra.length(); i++) {//comeca a consumir palavra
-			this.Destino = new ArrayList<String>();
-			String transicao;String dot;	
-			Character c = palavra.charAt(i);
-
-			for (int j =0;j<EstadoAtualAFN.size();j++) {//transicao do atual para seu destino
-				transicao = "["+EstadoAtualAFN.get(j)+"]:"+c;//monta key transicao para buscar no map de transicoes
-				if (AFN.get(transicao) != null) { //se existe transicao pelo caminho escolhido movimenta
-					Destino.addAll(AFN.get(transicao)); //destinos possiveis
-					if(Destino.size()>1) {	//se mais de um caminho possivel (Nao-Determinismo)
-						printTransicaoAFN2(EstadoAtualAFN.get(j), c, Destino);
-						try {
-							criarDOTTransicao(i,EstadoAtualAFN.get(j),c,Destino.get(0));
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+		if(EstadosIniciais.size()==1) {	// se so um estado inicial
+			this.EstadoAtualAFN.add(EstadosIniciais.get(0));//inicial
+			System.out.println("|--- Estado Inicial: " +EstadoAtualAFN +" | Palavra: "+palavra+" ---|");
+			System.out.println("_________________________________________________________________________________________________________________");
+			
+			//comeco do automato
+			for (int i=0; i<palavra.length(); i++) {//comeca a consumir palavra
+				this.Destino = new ArrayList<String>();
+				String transicao;String dot;	
+				Character c = palavra.charAt(i);
+	
+				for (int j =0;j<EstadoAtualAFN.size();j++) {//transicao do atual para seu destino
+					transicao = "["+EstadoAtualAFN.get(j)+"]:"+c;//monta key transicao para buscar no map de transicoes
+					if (AFN.get(transicao) != null) { //se existe transicao pelo caminho escolhido movimenta
+						Destino.addAll(AFN.get(transicao)); //destinos possiveis
+						if(Destino.size()>1) {	//se mais de um caminho possivel (Nao-Determinismo)
+							printTransicaoAFN2(EstadoAtualAFN.get(j), c, Destino);
+							try {
+								criarDOTTransicaoND(i,EstadoAtualAFN.get(j),c,Destino);
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						} else {	//se so um caminho possivel (Determinismo)
+							printTransicaoAFN(EstadoAtualAFN.get(j), c, Destino);
+							try {
+								criarDOTTransicao(i,EstadoAtualAFN.get(j),c,Destino.get(0));
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 						}
-					} else {	//se so um caminho possivel (Determinismo)
-						printTransicaoAFN(EstadoAtualAFN.get(j), c, Destino);
-						try {
-							criarDOTTransicao(i,EstadoAtualAFN.get(j),c,Destino.get(0));
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+					} else {	//transicao vazia, nao da pra proseguir nesse caminho (Nao-Determinismo)
+						System.out.print("|---    Sem caminho   ---| ");printTransicaoAFN2(EstadoAtualAFN.get(j), c, Destino);
 					}
-				} else {	//transicao vazia, nao da pra proseguir nesse caminho (Nao-Determinismo)
-					System.out.print("|---    Sem caminho   ---| ");printTransicaoAFN2(EstadoAtualAFN.get(j), c, Destino);
+				}
+				if (Destino.isEmpty()) { //nao achou nenhum destino possivel rejeito
+					System.out.print("|---    Sem caminho   ---| ");
+					return false;
+				}
+				EstadoAtualAFN = Destino;	//a cada movimentacao por um caminho valido do automato
+				System.out.println("_________________________________________________________________________________________________________________");
+			}
+			
+			System.out.println("|-----  Leu toda a palavra  -----|");
+			
+			int i=0;
+			for (i=0;i<EstadoAtualAFN.size();i++) {	//Se EstadosFinais contem qualquer dos estados atuais
+				if (EstadosFinais.contains(EstadoAtualAFN.get(i))) {
+					this.EstadoAtual = EstadoAtualAFN.get(i);//estado final encontrado, aceitou
+					return true;
 				}
 			}
-			if (Destino.isEmpty()) { //nao achou nenhum destino possivel rejeito
-				System.out.print("|---    Sem caminho   ---| ");
-				return false;
-			}
-			EstadoAtualAFN = Destino;	//a cada movimentacao por um caminho valido do automato
-			System.out.println("_________________________________________________________________________________________________________________");
-		}
+			
+			this.EstadoAtual = EstadoAtualAFN.get(0);
+			return false;
+			
+		} else {	//se mais de um estado inicial
+			System.out.println("|-----  Mais de um estado inicial  -----|");
+			for(int x=0;x<EstadosIniciais.size();x++) {
+				EstadoAtualAFN.clear();
+				this.EstadoAtualAFN.add(EstadosIniciais.get(x));//inicial
+				System.out.println("|--- Estado Inicial: " +EstadoAtualAFN +" | Palavra: "+palavra+" ---|");
+				System.out.println("_________________________________________________________________________________________________________________");
+				
+				//comeco do automato
+				for (int i=0; i<palavra.length(); i++) {//comeca a consumir palavra
+					this.Destino = new ArrayList<String>();
+					String transicao;String dot;	
+					Character c = palavra.charAt(i);
 		
-		System.out.println("|-----  Leu toda a palavra  -----|");
-		
-		int i=0;
-		for (i=0;i<EstadoAtualAFN.size();i++) {	//Se EstadosFinais contem qualquer dos estados atuais
-			if (EstadosFinais.contains(EstadoAtualAFN.get(i))) {
-				this.EstadoAtual = EstadoAtualAFN.get(i);//estado final encontrado, aceitou
-				return true;
+					for (int j =0;j<EstadoAtualAFN.size();j++) {//transicao do atual para seu destino
+						transicao = "["+EstadoAtualAFN.get(j)+"]:"+c;//monta key transicao para buscar no map de transicoes
+						if (AFN.get(transicao) != null) { //se existe transicao pelo caminho escolhido movimenta
+							Destino.addAll(AFN.get(transicao)); //destinos possiveis
+							if(Destino.size()>1) {	//se mais de um caminho possivel (Nao-Determinismo)
+								printTransicaoAFN2(EstadoAtualAFN.get(j), c, Destino);
+								try {
+									criarDOTTransicaoND(i,EstadoAtualAFN.get(j),c,Destino);
+								} catch (FileNotFoundException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							} else {	//se so um caminho possivel (Determinismo)
+								printTransicaoAFN(EstadoAtualAFN.get(j), c, Destino);
+								try {
+									criarDOTTransicao(i,EstadoAtualAFN.get(j),c,Destino.get(0));
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+						} else {	//transicao vazia, nao da pra proseguir nesse caminho (Nao-Determinismo)
+							System.out.print("|---    Sem caminho   ---| ");printTransicaoAFN2(EstadoAtualAFN.get(j), c, Destino);
+						}
+					}
+					if (Destino.isEmpty()) { //nao achou nenhum destino possivel rejeito
+						System.out.print("|---    Sem caminho   ---| ");
+						return false;
+					}
+					EstadoAtualAFN = Destino;	//a cada movimentacao por um caminho valido do automato
+					System.out.println("_________________________________________________________________________________________________________________");
+				}
+				
+				System.out.println("|-----  Leu toda a palavra  -----|");
+				
+				int i=0;
+				for (i=0;i<EstadoAtualAFN.size();i++) {	//Se EstadosFinais contem qualquer dos estados atuais
+					if (EstadosFinais.contains(EstadoAtualAFN.get(i))) {
+						this.EstadoAtual = EstadoAtualAFN.get(i);//estado final encontrado, aceitou
+						return true;
+					}
+				}
+				
+				this.EstadoAtual = EstadoAtualAFN.get(0);
 			}
+			return false;
 		}
-		this.EstadoAtual = EstadoAtualAFN.get(0);
-		return false;
 	}
 
 	private void printTransicaoAFN(String string, Character c, List<String> e2) {
@@ -205,8 +255,10 @@ public class Automato {
 		    }
 		    out.write("}");
 		    out.newLine();
-		    out.write("start -> "+EstadosIniciais.get(0));
-		    out.newLine();
+		    for(int i=0;i<EstadosIniciais.size();i++) {
+		    	 out.write("start -> "+EstadosIniciais.get(i));out.newLine();
+		    }
+		   
 		    for(int i=0;i<ImprimirDot.size();i++) {
 		    	out.write(ImprimirDot.get(i));
 		    	//System.out.println(ImprimirDot.get(i));
@@ -248,12 +300,10 @@ public class Automato {
 		    
 		    out.write("}");
 		    out.newLine();
-		    out.write("start -> "+EstadosIniciais.get(0));
-		    out.newLine();
+		    for(int i=0;i<EstadosIniciais.size();i++) {
+		    	 out.write("start -> "+EstadosIniciais.get(i));out.newLine();
+		    }
 		    for(int i=0;i<ImprimirDot.size();i++) {
-		    	//s = ImprimirDot.get(i);
-		    	//s = s.replace("->","");s = s.replace("[","");s = s.replace("];","");s = s.replace("label=","");s = s.replace("  "," ");
-		    	//String s1[] = s.split(" ");
 		    	if(dot.equals(ImprimirDot.get(i))) {
 		    		dot = Estado+" -> "+Destino+" [ label="+c+" color=green];";
 		    		out.write(dot);
@@ -273,6 +323,63 @@ public class Automato {
 			
 		//System.out.println("dot -Tpng g"+x+".dot -o grafo"+x+".png");
 		Process proc = Runtime.getRuntime().exec("dot -Tpng g"+x+".dot -o grafo"+x+".png");
+	}
+	
+	private void criarDOTTransicaoND(int x, String Estado, Character c, ArrayList<String> Destino) throws FileNotFoundException, IOException {	//dot para transicoes não deterministicas
+		String s="";String dot="";
+		try(BufferedWriter out=new BufferedWriter(new OutputStreamWriter(new FileOutputStream("g"+x+".dot"))))
+		{
+		    out.write("digraph {"); out.newLine();
+		    out.write("{"); out.newLine();
+		    for(int i=0;i<EstadosIniciais.size();i++) {
+		    	out.write(EstadosIniciais.get(i)+"[margin=0 color=cornflowerblue fontcolor=white fontsize=16 width=0.5 shape=circle style=filled]"); out.newLine();
+		    }
+		    for(int i=0;i<EstadosFinais.size();i++) {
+		    	out.write(EstadosFinais.get(i)+"[margin=0 color=cornflowerblue fontcolor=white fontsize=16 width=0.5 shape=doublecircle style=filled]"); out.newLine();
+		    }
+		    for(int i=0;i<Estados.size();i++) {
+		    	if(!EstadosFinais.contains(Estados.get(i))) {
+		    		if(!EstadosIniciais.contains(Estados.get(i))) {
+		    			out.write(Estados.get(i)+"[margin=0 color=cornflowerblue fontcolor=white fontsize=16 width=0.5 shape=circle style=filled]");out.newLine();
+		    		}
+		    	}	    		 
+		    }
+		    if(EstadosFinais.contains(Estado)) {//se é final ou inicial
+		    	out.write(Estado+"[margin=0 color=red fontcolor=white fontsize=16 width=0.5 shape=doublecircle style=filled]");out.newLine();
+		    } else {
+		    	out.write(Estado+"[margin=0 color=red fontcolor=white fontsize=16 width=0.5 shape=circle style=filled]");out.newLine();
+		    }
+		    
+		    out.write("}");
+		    out.newLine();
+		    for(int i=0;i<EstadosIniciais.size();i++) {
+		    	 out.write("start -> "+EstadosIniciais.get(i));out.newLine();
+		    }
+		    for(int i=0;i<ImprimirDot.size();i++) {
+		    	for(int b =0;b<Destino.size();b++) {
+			    	dot = Estado+" -> "+Destino.get(b)+" [ label="+c+"];";
+			    	if(dot.equals(ImprimirDot.get(i))) {
+			    		String dot1 = Estado+" -> "+Destino.get(b)+" [ label="+c+" color=green];";
+			    		out.write(dot1);
+				    	out.newLine();
+			    	}	
+		    	}
+		    	if(!dot.equals(ImprimirDot.get(i))) {
+			    	out.write(ImprimirDot.get(i));
+			    	out.newLine();
+		    	}
+		    
+		    }
+	    
+		    out.write("start [shape=Mdiamond];");
+		    out.newLine();
+		    out.write("}");
+		    
+		 }
+			
+		//System.out.println("dot -Tpng g"+x+".dot -o grafo"+x+".png");
+		Process proc = Runtime.getRuntime().exec("dot -Tpng g"+x+".dot -o grafo"+x+".png");
+		
 	}
 	
 	private void criarDOTFinal(String EstadoAtual) throws IOException{//dot -Tpng g.dot -o grafo1.png
@@ -300,8 +407,9 @@ public class Automato {
 		    }
 		    out.write("}");
 		    out.newLine();
-		    out.write("start -> "+EstadosIniciais.get(0));
-		    out.newLine();
+		    for(int i=0;i<EstadosIniciais.size();i++) {
+		    	 out.write("start -> "+EstadosIniciais.get(i));out.newLine();
+		    }
 		    for(int i=0;i<ImprimirDot.size();i++) {
 		    	out.write(ImprimirDot.get(i));
 		    	//System.out.println(ImprimirDot.get(i));
@@ -315,6 +423,7 @@ public class Automato {
 		    Runtime.getRuntime().exec("dot -Tpng gfinal.dot -o grafofinal.png");
 		 }
 	}
+	
 	
 //----------------------------------------------------------- AFD ---------------------------------------------------------------------------
 	public void AFD(String[] linha1, ArrayList<String> transicao1, String palavra) {//testes de afds

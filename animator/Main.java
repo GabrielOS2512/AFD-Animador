@@ -1,6 +1,8 @@
 package animator;
 
+import java.awt.Desktop;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,12 +19,11 @@ public class Main {
 	
 		//Inicio
 		System.out.println("|--- Animador de AFDs ---|");
-		System.out.println("|--- Gabriel Oliveira Silva 16.1.8091 ---|");
 		
 		while(true) {
 			//System.out.println("|--- Insira o nome do arquivo ---|");
 			//String arquivo = sc.nextLine();
-			String arquivo = "afn2.txt";
+			String arquivo = "afn3.txt";
 			FileReader fr;
 			try {
 				fr = new FileReader(arquivo);
@@ -46,7 +47,29 @@ public class Main {
 				System.out.println("|--- Arquivo Inválido ---|");
 			}
 		}
+		
+		System.out.println("|--- Deseja abrir a animação? 0-Não 1-Sim---|");
+		String comando = sc.nextLine();
+		switch(comando) {
+			case "1":{
+				//abrir o gif do automato
+				try { 
+					System.out.println("|-----      Abrindo...      -----|");
+					File file = new File("automato.gif");   
+					if(!Desktop.isDesktopSupported()){  
+						return;  
+					}  
+					Desktop desktop = Desktop.getDesktop();  
+					if(file.exists()) 
+						desktop.open(file);  
+				} catch(Exception e){  
+					e.printStackTrace();  
+				} 
+			}
+		}
+		
 		sc.close();
+		System.out.println("|-----  Execução Encerrada  -----|");
 	}
 
 }
