@@ -1,9 +1,9 @@
 # Animador de Autômatos
-Programa que recebe um arquivo txt contendo as informações do autômato no formato descrito abaixo, retorna se a palavra é aceita e em sequencia produz um gif do autômato, mostrando suas transições ao ler a palavra.
+Programa que recebe um arquivo txt contendo as informações do autômato no formato descrito abaixo, retorna se a palavra é aceita e em sequencia produz um *gif* do autômato, mostrando suas transições ao ler a palavra.
 ## Avisos
 Foi desenvolvido como um trabalho da disciplina de Teoria da Computação, e não almeja ser um projeto perfeito. Após cumprir os requisitos da entrega, decidi compartilhar para ajudar à outros alunos. Em caso de AFNs Lambda, o autômato retornado será um AFN padrão equivalente.
 
-O programa retorna no gif o primeiro caminho percorrido que conseguir aceitar a palavra ou encaso de rejeição o último.
+O programa retorna no *gif* o primeiro caminho percorrido que conseguir aceitar a palavra ou encaso de rejeição o último.
 ## Necessário para a execução
 É necessário para a execução do programa :
 * **GraphViz**: O programa gera arquivos *dot* para cada transição da palavra e é convertido pelo GraphViz em um arquivo imagem no formato *png*.
@@ -29,7 +29,8 @@ Após todas as transições forem descritas, a palavra a ser lida deve ser indic
 As linhas não podem estar vazias e os espaçamentos devem ser respeitados. O Lambda deve ser representado por um **/**
 
 ### Exemplo
-Exemplo de um AFN com 2 estados iniciais.
+Exemplo de um AFN com 2 estados iniciais e seu autômato resultante.
+
 s0 s3 ; s2
 
 s0 a > s0
