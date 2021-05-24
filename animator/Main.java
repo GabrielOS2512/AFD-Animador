@@ -18,12 +18,18 @@ public class Main {
 		ArrayList<String> txt = new ArrayList<String>();
 	
 		//Inicio
-		System.out.println("|--- Animador de AFDs ---|");
+		System.out.println("|--- Animador de AFs ---|");
+
+		File folder = new File(".");		//deletar aquivos anteriores
+		for (File f : folder.listFiles()) { //
+		    if (f.getName().endsWith(".png") || f.getName().endsWith(".dot")) {
+		        f.delete();
+		    }
+		}
 		
 		while(true) {
-			//System.out.println("|--- Insira o nome do arquivo ---|");
-			//String arquivo = sc.nextLine();
-			String arquivo = "afn3.txt";
+			System.out.println("|--- Insira o nome do arquivo ---|");
+			String arquivo = sc.nextLine();
 			FileReader fr;
 			try {
 				fr = new FileReader(arquivo);
@@ -57,6 +63,7 @@ public class Main {
 					System.out.println("|-----      Abrindo...      -----|");
 					File file = new File("automato.gif");   
 					if(!Desktop.isDesktopSupported()){  
+						sc.close();
 						return;  
 					}  
 					Desktop desktop = Desktop.getDesktop();  
